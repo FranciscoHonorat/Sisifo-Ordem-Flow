@@ -19,6 +19,14 @@ func NewOrderID(id uuid.UUID) (OrderID, error) {
 	return OrderID{id: id}, nil
 }
 
+func NewOrderIDMust(id uuid.UUID) OrderID {
+	orderID, err := NewOrderID(id)
+	if err != nil {
+		panic(err)
+	}
+	return orderID
+}
+
 func (o OrderID) ID() uuid.UUID {
 	return o.id
 }

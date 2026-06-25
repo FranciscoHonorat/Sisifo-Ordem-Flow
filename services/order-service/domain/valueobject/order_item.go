@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type OrderItem struct {
@@ -56,40 +58,44 @@ func (i OrderItem) CreatedAt() time.Time {
 
 func (i OrderItem) MarshalJSON() ([]byte, error) {
 	auxOrderItem := struct {
-		ProductID ProductID `json:"productID"`
-		UnitPrice Money     `json:"unitPrice"`
-		Quantity  Quantity  `json:"quantity"`
-		CreatedAt string    `json:"createdAt"`
+		ProductID string `json:"product_id"`
+		UnitPrice Money  `json:"unit_price"`
+		Quantity  int64  `json:"quantity"`
 	}{
-		ProductID: i.productID,
+		ProductID: i.productID.String(),
 		UnitPrice: i.unitPrice,
-		Quantity:  i.quantity,
-		CreatedAt: i.createdAt.Format(time.RFC3339),
+		Quantity:  i.quantity.Value(),
 	}
 	return json.Marshal(auxOrderItem)
 }
 
 func (i *OrderItem) UnmarshalJSON(data []byte) error {
 	var orderItem struct {
-		ProductID ProductID `json:"productID"`
-		UnitPrice Money     `json:"unitPrice"`
-		Quantity  Quantity  `json:"quantity"`
-		CreatedAt string    `json:"createdAt"`
+		ProductID string `json:"product_id"`
+		UnitPrice Money  `json:"unit_price"`
+		Quantity  int64  `json:"quantity"`
 	}
 
 	if err := json.Unmarshal(data, &orderItem); err != nil {
 		return err
 	}
 
-	i.productID = orderItem.ProductID
-	i.unitPrice = orderItem.UnitPrice
-	i.quantity = orderItem.Quantity
-
-	var err error
-	i.createdAt, err = time.Parse(time.RFC3339, orderItem.CreatedAt)
+	parseUUID, err := uuid.Parse(orderItem.ProductID)
 	if err != nil {
-		return fmt.Errorf("unmarshal createdAt: %w", err)
+		return fmt.Errorf("unmarshal productID: %w", err)
 	}
 
+	productID, err := NewProductID(parseUUID)
+	if err != nil {
+		return err
+	}
+	quantity, err := NewQuantity(orderItem.Quantity)
+	if err != nil {
+		return err
+	}
+	i.productID = productID
+	i.unitPrice = orderItem.UnitPrice
+	i.quantity = quantity
+	i.createdAt = time.Now()
 	return nil
 }

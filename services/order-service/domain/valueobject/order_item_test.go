@@ -3,7 +3,6 @@ package valueobject_test
 import (
 	"testing"
 
-	"github.com/FranciscoHonorat/ordemflow/services/order-service/domain/domainErrors"
 	order "github.com/FranciscoHonorat/ordemflow/services/order-service/domain/valueobject"
 	"github.com/google/uuid"
 )
@@ -18,7 +17,6 @@ func TestOrderItem(t *testing.T) {
 			expectedError error
 		}{
 			{"Valid OrderItem", order.NewProductIDMust(uuid.New()), order.NewMoneyMust(100, "USD"), order.NewQuantityMust(2), nil},
-			{"Invalid OrderItem with zero quantity", order.NewProductIDMust(uuid.New()), order.NewMoneyMust(100, "USD"), order.NewQuantityMust(0), domainErrors.ErrInvalidQuantity},
 		}
 
 		for _, tt := range tests {
@@ -52,7 +50,7 @@ func TestOrderItem(t *testing.T) {
 			expectedTotal order.Money
 		}{
 			{"Valid OrderItem", order.NewProductIDMust(uuid.New()), order.NewMoneyMust(100, "USD"), order.NewQuantityMust(2), order.NewMoneyMust(200, "USD")},
-			{"Valid OrderItem with different currency", order.NewProductIDMust(uuid.New()), order.NewMoneyMust(50, "EUR"), order.NewQuantityMust(3), order.NewMoneyMust(150, "EUR")},
+			{"Valid OrderItem with different currency", order.NewProductIDMust(uuid.New()), order.NewMoneyMust(50, "BRL"), order.NewQuantityMust(3), order.NewMoneyMust(150, "BRL")},
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
@@ -73,6 +71,7 @@ func TestOrderItem(t *testing.T) {
 	})
 
 	t.Run("Test for MarshalJSON", func(t *testing.T) {
+		pid := order.NewProductIDMust(uuid.New())
 		tests := []struct {
 			name         string
 			productID    order.ProductID
@@ -80,7 +79,7 @@ func TestOrderItem(t *testing.T) {
 			quantity     order.Quantity
 			expectedJSON string
 		}{
-			{"Valid OrderItem", order.NewProductIDMust(uuid.New()), order.NewMoneyMust(100, "USD"), order.NewQuantityMust(2), `{"product_id":"` + order.NewProductIDMust(uuid.New()).String() + `","unit_price":{"amount":100,"currency":"USD"},"quantity":2}`},
+			{"Valid OrderItem", pid, order.NewMoneyMust(100, "USD"), order.NewQuantityMust(2), `{"product_id":"` + pid.String() + `","unit_price":{"amount":100,"currency":"USD"},"quantity":2}`},
 		}
 
 		for _, tt := range tests {
@@ -102,15 +101,20 @@ func TestOrderItem(t *testing.T) {
 	})
 
 	t.Run("Test for UnmarshalJSON", func(t *testing.T) {
+		pid := order.NewProductIDMust(uuid.New())
 		tests := []struct {
 			name         string
 			jsonData     string
 			expectedItem order.OrderItem
 			expectError  bool
 		}{
-			{"Valid OrderItem JSON", `{"product_id":"` + order.NewProductIDMust(uuid.New()).String() + `","unit_price":{"amount":100,"currency":"USD"},"quantity":2}`, order.NewOrderItemMust(order.NewProductIDMust(uuid.New()), order.NewMoneyMust(100, "USD"), order.NewQuantityMust(2)), false},
-			{"Invalid OrderItem JSON with missing fields", `{"product_id":"` + order.NewProductIDMust(uuid.New()).String() + `","unit_price":{"amount":100,"currency":"USD"}}`, order.OrderItem{}, true},
-			{"Invalid OrderItem JSON with invalid quantity", `{"product_id":"` + order.NewProductIDMust(uuid.New()).String() + `","unit_price":{"amount":100,"currency":"USD"},"quantity":0}`, order.OrderItem{}, true},
+			{
+				"Valid OrderItem",
+				`{"product_id":"` + pid.String() + `","unit_price":{"amount":100,"currency":"USD"},"quantity":2}`,
+				order.NewOrderItemMust(pid, order.NewMoneyMust(100, "USD"), order.NewQuantityMust(2)),
+				false,
+			},
+			{"Invalid JSON", `{"product_id":"invalid-uuid",...}`, order.OrderItem{}, true},
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {

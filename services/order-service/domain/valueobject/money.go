@@ -17,14 +17,20 @@ type Money struct {
 	currency string
 }
 
-func NewMoney(amount int64, currency string) (Money, error) {
+func validateMoney(amount int64, currency string) error {
 	if amount <= 0 {
-		return Money{}, domainErrors.ErrNegativeAmount
+		return domainErrors.ErrNegativeAmount
 	}
 	if !validCurrencies[currency] {
-		return Money{}, domainErrors.ErrInvalidCurrency
+		return domainErrors.ErrInvalidCurrency
 	}
+	return nil
+}
 
+func NewMoney(amount int64, currency string) (Money, error) {
+	if err := validateMoney(amount, currency); err != nil {
+		return Money{}, err
+	}
 	return Money{
 		amount:   amount,
 		currency: currency,
@@ -37,6 +43,20 @@ func NewMoneyMust(amount int64, currency string) Money {
 		panic(err)
 	}
 	return m
+}
+
+func (m Money) Validate() error {
+	return validateMoney(m.amount, m.currency)
+}
+
+func (m Money) Add(other Money) (Money, error) {
+	if m.currency != other.currency {
+		return Money{}, domainErrors.ErrCurrencyMismatch
+	}
+	return Money{
+		amount:   m.amount + other.amount,
+		currency: m.currency,
+	}, nil
 }
 
 func (m Money) Amount() int64 {
@@ -59,11 +79,8 @@ func (m Money) Multiply(quantity int64) (Money, error) {
 	if quantity <= 0 {
 		return Money{}, domainErrors.ErrInvalidQuantity
 	}
-	if m.amount <= 0 {
-		return Money{}, domainErrors.ErrInvalidAmount
-	}
-	if !validCurrencies[m.currency] {
-		return Money{}, domainErrors.ErrInvalidCurrency
+	if err := validateMoney(m.amount, m.currency); err != nil {
+		return Money{}, err
 	}
 	return Money{
 		amount:   m.amount * quantity,
@@ -87,18 +104,17 @@ func (m *Money) UnmarshalJSON(data []byte) error {
 		Amount   int64  `json:"amount"`
 		Currency string `json:"currency"`
 	}
-
 	if err := json.Unmarshal(data, &alias); err != nil {
 		return err
 	}
-
-	if alias.Amount <= 0 {
-		return domainErrors.ErrNegativeAmount
+	if alias.Amount != 0 || alias.Currency != "" {
+		if alias.Amount < 0 {
+			return domainErrors.ErrNegativeAmount
+		}
+		if !validCurrencies[alias.Currency] {
+			return domainErrors.ErrInvalidCurrency
+		}
 	}
-	if !validCurrencies[alias.Currency] {
-		return domainErrors.ErrInvalidCurrency
-	}
-
 	m.amount = alias.Amount
 	m.currency = alias.Currency
 	return nil

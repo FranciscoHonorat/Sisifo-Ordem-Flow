@@ -113,27 +113,29 @@ func (a *Address) UnmarshalJSON(data []byte) error {
 		ReferencePoint string `json:"referencePoint"`
 		Complement     string `json:"complement"`
 	}
-
 	if err := json.Unmarshal(data, &address); err != nil {
 		return err
 	}
-
-	if !cepRegex.MatchString(address.CEP) {
-		return domainErrors.ErrInvalidCEP
+	if address.CEP != "" {
+		if !cepRegex.MatchString(address.CEP) {
+			return domainErrors.ErrInvalidCEP
+		}
+		if address.Street == "" {
+			return domainErrors.ErrFieldEmpty
+		}
+		if address.Neighborhood == "" {
+			return domainErrors.ErrFieldEmpty
+		}
+		if address.Number <= 0 {
+			return domainErrors.ErrInvalidNumber
+		}
+		if address.ReferencePoint == "" {
+			return domainErrors.ErrFieldEmpty
+		}
+		if address.Complement == "" {
+			return domainErrors.ErrFieldEmpty
+		}
 	}
-
-	if address.Street == "" {
-		return domainErrors.ErrFieldEmpty
-	}
-
-	if address.Neighborhood == "" {
-		return domainErrors.ErrFieldEmpty
-	}
-
-	if address.Number <= 0 {
-		return domainErrors.ErrInvalidNumber
-	}
-
 	a.cep = address.CEP
 	a.street = address.Street
 	a.neighborhood = address.Neighborhood

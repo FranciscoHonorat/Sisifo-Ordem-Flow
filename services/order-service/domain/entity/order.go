@@ -21,6 +21,13 @@ type Order struct {
 }
 
 func NewOrder(id valueobject.OrderID, customerID valueobject.CustomerID) (*Order, error) {
+	if id == (valueobject.OrderID{}) {
+		return nil, domainErrors.ErrInvalidOrderID
+	}
+	if customerID == (valueobject.CustomerID{}) {
+		return nil, domainErrors.ErrInvalidCustomerID
+	}
+
 	return &Order{
 		id:         id,
 		customerID: customerID,
@@ -40,24 +47,27 @@ func NewOrderMust(id valueobject.OrderID, customerID valueobject.CustomerID) *Or
 }
 
 func (o *Order) recalculateTotal() error {
-	var totalCents int64
-	currency := "BRL"
+	if len(o.items) == 0 {
+		o.totalPrice = valueobject.Money{} // Reset total price to zero if there are no items
+		return nil
+	}
 
-	for _, item := range o.items {
+	total, err := o.items[0].SubTotal()
+	if err != nil {
+		return fmt.Errorf("Recalculate total: %w", err)
+	}
+
+	for _, item := range o.items[1:] {
 		sub, err := item.SubTotal()
 		if err != nil {
-			return fmt.Errorf("recalculate total: %w", err)
+			return fmt.Errorf("Recalculate total: %w", err)
 		}
-		totalCents += sub.Amount()
-		currency = sub.Currency()
+		total, err = total.Add(sub)
+		if err != nil {
+			return fmt.Errorf("Recalculate total: %w", err)
+		}
 	}
-
-	newTotal, err := valueobject.NewMoney(totalCents, currency)
-	if err != nil {
-		return fmt.Errorf("recalculate total: %w", err)
-	}
-
-	o.totalPrice = newTotal
+	o.totalPrice = total
 	return nil
 }
 
@@ -75,7 +85,7 @@ func (o *Order) AddItem(item valueobject.OrderItem) error {
 
 func (o *Order) UpdateStatus(newStatus valueobject.OrderStatus) error {
 	if !newStatus.IsValid() {
-		return domainErrors.ErrInvalidStatus
+		return domainErrors.ErrInvalidOrderStatus
 	}
 	o.status = newStatus
 	o.updatedAt = time.Now()
@@ -114,77 +124,6 @@ func (o *Order) CreatedAt() time.Time {
 
 func (o *Order) UpdatedAt() time.Time {
 	return o.updatedAt
-}
-
-func (o *Order) SetAddress(address valueobject.Address) {
-	o.address = address
-	o.updatedAt = time.Now()
-}
-
-func (o *Order) SetTotalPrice(totalPrice valueobject.Money) {
-	o.totalPrice = totalPrice
-	o.updatedAt = time.Now()
-}
-
-func (o *Order) SetItems(items []valueobject.OrderItem) error {
-	previous := make([]valueobject.OrderItem, len(o.items))
-	copy(previous, o.items)
-	o.items = items
-
-	if err := o.recalculateTotal(); err != nil {
-		o.items = previous
-		return err
-	}
-	return nil
-}
-
-func (o *Order) SetStatus(status valueobject.OrderStatus) error {
-	if !status.IsValid() {
-		return domainErrors.ErrInvalidStatus
-	}
-	o.status = status
-	o.updatedAt = time.Now()
-	return nil
-}
-
-func (o *Order) SetAddressAndUpdate(address valueobject.Address) {
-	o.address = address
-	o.updatedAt = time.Now()
-}
-
-func (o *Order) SetTotalPriceAndUpdate(totalPrice valueobject.Money) {
-	o.totalPrice = totalPrice
-	o.updatedAt = time.Now()
-}
-
-func (o *Order) SetItemsAndUpdate(items []valueobject.OrderItem) error {
-	previous := make([]valueobject.OrderItem, len(o.items))
-	copy(previous, o.items)
-	o.items = items
-
-	if err := o.recalculateTotal(); err != nil {
-		o.items = previous
-		return err
-	}
-	o.updatedAt = time.Now()
-	return nil
-}
-
-func (o *Order) SetStatusAndUpdate(status valueobject.OrderStatus) error {
-	if !status.IsValid() {
-		return domainErrors.ErrInvalidStatus
-	}
-	o.status = status
-	o.updatedAt = time.Now()
-	return nil
-}
-
-func (o *Order) SetCreatedAt(createdAt time.Time) {
-	o.createdAt = createdAt
-}
-
-func (o *Order) SetUpdatedAt(updatedAt time.Time) {
-	o.updatedAt = updatedAt
 }
 
 func (o *Order) MarshalJSON() ([]byte, error) {

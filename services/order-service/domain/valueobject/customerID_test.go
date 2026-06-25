@@ -17,7 +17,7 @@ func TestCustomerID(t *testing.T) {
 			expectedError error
 		}{
 			{"Valid id", uuid.New(), nil},
-			{"Invalid id", uuid.Nil, domainErrors.ErrInvalidID},
+			{"Invalid id", uuid.Nil, domainErrors.ErrInvalidCustomerID},
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
@@ -55,7 +55,7 @@ func TestCustomerID(t *testing.T) {
 			expected bool
 		}{
 			{"Equal ID", customer.NewCustomerIDMust(id1), customer.NewCustomerIDMust(id1), true},
-			{"Diferente ID", customer.NewCustomerIDMust(id1), customer.NewCustomerIDMust(id2), true},
+			{"Diferente ID", customer.NewCustomerIDMust(id1), customer.NewCustomerIDMust(id2), false},
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
@@ -96,15 +96,15 @@ func TestCustomerID(t *testing.T) {
 			expected string
 		}{
 			{"Valid JSON", customer.NewCustomerIDMust(id1), `{"id":"` + id1.String() + `"}`},
-			{"Invalid JSON", customer.CustomerID{}, `{"id":"invalid-uuid"}`},
+			{"Invalid JSON", customer.CustomerID{}, `{"id":"00000000-0000-0000-0000-000000000000"}`},
 		}
 		for _, tt := range tests {
 			var c customer.CustomerID
 			t.Run(tt.name, func(t *testing.T) {
 				err := c.UnmarshalJSON([]byte(tt.expected))
 				if tt.name == "Invalid JSON" {
-					if !errors.Is(err, domainErrors.ErrInvalidID) {
-						t.Errorf("Expected error: %v, got: %v", domainErrors.ErrInvalidID, err)
+					if !errors.Is(err, domainErrors.ErrInvalidCustomerID) {
+						t.Errorf("Expected error: %v, got: %v", domainErrors.ErrInvalidCustomerID, err)
 					}
 					return
 				}
