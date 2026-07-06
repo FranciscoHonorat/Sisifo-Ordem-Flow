@@ -39,6 +39,10 @@ func (c CustomerID) Equal(o CustomerID) bool {
 	return c.id == o.id
 }
 
+func (c CustomerID) IsZero() bool {
+	return c.id == uuid.Nil
+}
+
 func (c CustomerID) MarshalJSON() ([]byte, error) {
 	auxCustomer := struct {
 		ID string `json:"id"`

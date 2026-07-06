@@ -14,6 +14,7 @@ const (
 	OrderStatusDelivered OrderStatus = "DELIVERED"
 	OrderStatusCancelled OrderStatus = "CANCELLED"
 	OrderStatusPaid      OrderStatus = "PAID"
+	OrderStatusPlaced    OrderStatus = "PLACED"
 )
 
 func (s OrderStatus) IsValid() bool {

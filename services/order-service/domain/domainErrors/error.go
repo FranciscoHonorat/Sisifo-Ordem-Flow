@@ -19,4 +19,8 @@ var (
 	ErrInvalidPrice       = errors.New("Price must be greater than 0.")
 	ErrInvalidOrderStatus = errors.New("Invalid order status.")
 	ErrCurrencyMismatch   = errors.New("Currency mismatch between Money values.")
+	ErrEmptyOrder         = errors.New("Cannot place an order with no items.")
+	ErrOrderNoPending     = errors.New("Cannot place an order that is not in pending status.")
+	ErrCorruptedOrder     = errors.New("Order is corrupted.")
+	ErrOrderNotPlaced     = errors.New("Cannot cancel an order that has not been placed.")
 )

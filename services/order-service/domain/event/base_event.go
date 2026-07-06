@@ -4,24 +4,24 @@ import "time"
 
 type DomainEvent interface {
 	EventName() string
-	OccurentAt() time.Time
-	AggregatorID() string
+	OccurredAt() time.Time
+	AggregateId() string
 }
 
 type BaseEvent struct {
-	eventName    string
-	occurentAt   time.Time
-	aggregatorID string
+	eventName   string
+	occurredAt  time.Time
+	aggregateId string
 }
 
-func NewBaseEvent(name, aggregatorID string) BaseEvent {
+func NewBaseEvent(name, aggregateId string) BaseEvent {
 	return BaseEvent{
-		eventName:    name,
-		occurentAt:   time.Now().UTC(),
-		aggregatorID: aggregatorID,
+		eventName:   name,
+		occurredAt:  time.Now().UTC(),
+		aggregateId: aggregateId,
 	}
 }
 
 func (b BaseEvent) EventName() string     { return b.eventName }
-func (b BaseEvent) OccurentAt() time.Time { return b.occurentAt }
-func (b BaseEvent) AggregatorID() string  { return b.aggregatorID }
+func (b BaseEvent) OccurredAt() time.Time { return b.occurredAt }
+func (b BaseEvent) AggregateId() string   { return b.aggregateId }

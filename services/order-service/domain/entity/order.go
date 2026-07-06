@@ -19,14 +19,14 @@ type Order struct {
 	status     valueobject.OrderStatus
 	createdAt  time.Time
 	updatedAt  time.Time
-	event      []event.DomainEvent
+	events     []event.DomainEvent
 }
 
 func NewOrder(id valueobject.OrderID, customerID valueobject.CustomerID) (*Order, error) {
-	if id == (valueobject.OrderID{}) {
+	if id.IsZero() {
 		return nil, domainErrors.ErrInvalidOrderID
 	}
-	if customerID == (valueobject.CustomerID{}) {
+	if customerID.IsZero() {
 		return nil, domainErrors.ErrInvalidCustomerID
 	}
 
@@ -94,24 +94,53 @@ func (o *Order) UpdateStatus(newStatus valueobject.OrderStatus) error {
 	return nil
 }
 
-func (o *Order) Place() {
-	evt := event.NewOrderPlaced(
-		o.id.String(),
-		o.customerID.String(),
-		o.totalPrice,
-		len(o.items),
-	)
-	o.event = append(o.event, evt)
+func (o *Order) Place() error {
+	if !o.status.IsValid() {
+		return domainErrors.ErrCorruptedOrder
+	}
+	if len(o.items) == 0 {
+		return domainErrors.ErrEmptyOrder
+	}
+	if o.status != valueobject.OrderStatusPending {
+		return domainErrors.ErrOrderNoPending
+	}
+
+	o.status = valueobject.OrderStatusPlaced
+	o.updatedAt = time.Now().UTC()
+
+	evt := event.NewOrderPlaced(o.id.String(), o.customerID.String(), o.totalPrice, len(o.items))
+	o.addEvent(evt)
+	return nil
 }
 
-func (o *Order) DomainEvent() []event.DomainEvent {
-	cp := make([]event.DomainEvent, len(o.event))
-	copy(cp, o.event)
+func (o *Order) Cancel(reason string) error {
+	if !o.status.IsValid() {
+		return domainErrors.ErrCorruptedOrder
+	}
+	if o.status != valueobject.OrderStatusPlaced {
+		return domainErrors.ErrOrderNotPlaced
+	}
+
+	o.status = valueobject.OrderStatusCancelled
+	o.updatedAt = time.Now().UTC()
+
+	evt := event.NewOrderCancelled(o.id.String(), o.customerID.String(), reason)
+	o.addEvent(evt)
+	return nil
+}
+
+func (o *Order) addEvent(evt event.DomainEvent) {
+	o.events = append(o.events, evt)
+}
+
+func (o *Order) DomainEvents() []event.DomainEvent {
+	cp := make([]event.DomainEvent, len(o.events))
+	copy(cp, o.events)
 	return cp
 }
 
-func (o *Order) ClearEvent() {
-	o.event = nil
+func (o *Order) ClearEvents() {
+	o.events = nil
 }
 
 func (o *Order) ID() valueobject.OrderID {
@@ -198,6 +227,10 @@ func (o *Order) UnmarshalJSON(data []byte) error {
 	o.createdAt, err = time.Parse(time.RFC3339, order.CreatedAt)
 	if err != nil {
 		return fmt.Errorf("unmarshal createdAt: %w", err)
+	}
+
+	if !o.status.IsValid() {
+		return domainErrors.ErrInvalidOrderStatus
 	}
 
 	o.updatedAt, err = time.Parse(time.RFC3339, order.UpdatedAt)

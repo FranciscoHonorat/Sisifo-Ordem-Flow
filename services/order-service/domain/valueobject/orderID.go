@@ -39,6 +39,10 @@ func (o OrderID) Equal(other OrderID) bool {
 	return o.id == other.id
 }
 
+func (o OrderID) IsZero() bool {
+	return o.id == uuid.Nil
+}
+
 func (o OrderID) MarshalJSON() ([]byte, error) {
 	auxOrder := struct {
 		ID string `json:"id"`
