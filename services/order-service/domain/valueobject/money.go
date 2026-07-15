@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/FranciscoHonorat/ordemflow/services/order-service/domain/domainErrors"
+	domainErrors "github.com/FranciscoHonorat/ordemflow/services/order-service/domain/domain-errors"
 )
 
 var validCurrencies = map[string]bool{

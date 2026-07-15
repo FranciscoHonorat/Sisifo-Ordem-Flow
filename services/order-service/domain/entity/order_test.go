@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/FranciscoHonorat/ordemflow/services/order-service/domain/domainErrors"
+	domainErrors "github.com/FranciscoHonorat/ordemflow/services/order-service/domain/domain-errors"
 	orderEntity "github.com/FranciscoHonorat/ordemflow/services/order-service/domain/entity"
 	"github.com/FranciscoHonorat/ordemflow/services/order-service/domain/valueobject"
 	"github.com/google/uuid"
@@ -220,7 +220,7 @@ func TestOrder(t *testing.T) {
 					t.Errorf("Unexpected error during UnmarshalJSON: %v", err)
 				}
 
-				if unmarshaledOrder.ID() != tt.order.ID() || unmarshaledOrder.CustomerID() != tt.order.CustomerID() {
+				if unmarshaledOrder.OrderID() != tt.order.OrderID() || unmarshaledOrder.CustomerID() != tt.order.CustomerID() {
 					t.Errorf("Unmarshaled order does not match original order")
 				}
 			})

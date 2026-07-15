@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/FranciscoHonorat/ordemflow/services/order-service/domain/domainErrors"
+	domainErrors "github.com/FranciscoHonorat/ordemflow/services/order-service/domain/domain-errors"
 	"github.com/FranciscoHonorat/ordemflow/services/order-service/domain/event"
 	"github.com/FranciscoHonorat/ordemflow/services/order-service/domain/valueobject"
 )
@@ -143,7 +143,7 @@ func (o *Order) ClearEvents() {
 	o.events = nil
 }
 
-func (o *Order) ID() valueobject.OrderID {
+func (o *Order) OrderID() valueobject.OrderID {
 	return o.id
 }
 
@@ -176,6 +176,9 @@ func (o *Order) CreatedAt() time.Time {
 func (o *Order) UpdatedAt() time.Time {
 	return o.updatedAt
 }
+
+var _ json.Marshaler = (*Order)(nil)
+var _ json.Unmarshaler = (*Order)(nil)
 
 func (o *Order) MarshalJSON() ([]byte, error) {
 	order := struct {

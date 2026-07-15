@@ -23,4 +23,5 @@ var (
 	ErrOrderNoPending     = errors.New("Cannot place an order that is not in pending status.")
 	ErrCorruptedOrder     = errors.New("Order is corrupted.")
 	ErrOrderNotPlaced     = errors.New("Cannot cancel an order that has not been placed.")
+	ErrOrderNotFound      = errors.New("Order not found.")
 )

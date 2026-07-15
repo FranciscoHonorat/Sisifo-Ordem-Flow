@@ -3,7 +3,7 @@ package valueobject
 import (
 	"encoding/json"
 
-	"github.com/FranciscoHonorat/ordemflow/services/order-service/domain/domainErrors"
+	domainErrors "github.com/FranciscoHonorat/ordemflow/services/order-service/domain/domain-errors"
 	"github.com/google/uuid"
 )
 

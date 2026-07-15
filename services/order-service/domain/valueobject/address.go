@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"regexp"
 
-	"github.com/FranciscoHonorat/ordemflow/services/order-service/domain/domainErrors"
+	domainErrors "github.com/FranciscoHonorat/ordemflow/services/order-service/domain/domain-errors"
 )
 
 var cepRegex = regexp.MustCompile(`^\d{8}$`)
